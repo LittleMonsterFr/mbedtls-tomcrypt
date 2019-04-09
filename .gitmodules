@@ -1,0 +1,9 @@
+[submodule "mbedtls"]
+	path = mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "libtomcrypt"]
+	path = libtomcrypt
+	url = https://github.com/libtom/libtomcrypt.git
+[submodule "libtommath"]
+	path = libtommath
+	url = https://github.com/libtom/libtommath.git
