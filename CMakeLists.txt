@@ -39,20 +39,40 @@ FILE(GLOB LIBTOMMATH_SRC libtommath/*.c)
 # Sources for Libtomcrypt. Naively recurse
 FILE(GLOB_RECURSE LIBTOMCRYPT_SRC libtomcrypt/src/*.c)
 
-add_executable(test-rsa-sign-verify test-rsa-sign-verify.c ${MBEDTLS_SRC} ${LIBTOMMATH_SRC} ${LIBTOMCRYPT_SRC})
-
-target_include_directories(test-rsa-sign-verify PUBLIC mbedtls/include)
-target_include_directories(test-rsa-sign-verify PUBLIC libtomcrypt/src/headers)
-target_include_directories(test-rsa-sign-verify PUBLIC libtommath)
+add_library(crypto ${MBEDTLS_SRC} ${LIBTOMMATH_SRC} ${LIBTOMCRYPT_SRC})
 
 # Add compile flags for this build only
-target_compile_definitions(test-rsa-sign-verify PUBLIC
+target_compile_definitions(crypto PUBLIC
         LTC_SOURCE
         LTC_NO_RSA_BLINDING
         LTM_DESC
         )
 
-# Specify the folder in which to put the executable
-set_target_properties(test-rsa-sign-verify PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+
+include_directories(crypto PUBLIC mbedtls/include)
+include_directories(crypto PUBLIC libtomcrypt/src/headers)
+include_directories(crypto PUBLIC libtommath)
+include_directories(crypto PUBLIC openssl/include)
+
+set(bins
+        test-rsa-sign-verify-mbedtls-libtomcrypt.c
+        test-rsa-sign-verify-libtomcrypt-mbedtls.c
+        test-rsa-sign-verify-libtomcrypt-openssl.c
+        test-rsa-sign-verify-mbedtls-openssl.c
         )
+
+foreach(bin ${bins})
+
+    get_filename_component(bin_name ${bin} NAME_WE)
+
+    add_executable(${bin_name} ${bin})
+
+    target_link_libraries(${bin_name} crypto /home/littlemonster/chirp/mbedtls-tomcrypt/openssl/libcrypto.a pthread dl)
+
+    # Specify the folder in which to put the executable
+    set_target_properties(${bin_name} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            )
+
+endforeach()
+
