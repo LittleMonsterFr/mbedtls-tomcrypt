@@ -67,11 +67,11 @@ foreach(bin ${bins})
 
     add_executable(${bin_name} ${bin})
 
-    target_link_libraries(${bin_name} crypto /home/littlemonster/chirp/mbedtls-tomcrypt/openssl/libcrypto.a pthread dl)
+    target_link_libraries(${bin_name} crypto /Users/littlemonster/chirp/mbedtls-tomcrypt/openssl/libcrypto.a pthread dl)
 
     # Specify the folder in which to put the executable
     set_target_properties(${bin_name} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin"
             )
 
 endforeach()

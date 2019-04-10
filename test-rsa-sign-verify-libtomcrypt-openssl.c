@@ -49,8 +49,7 @@ int main(void)
     if ((prng_idx = register_prng(&sprng_desc)) == -1)
     {
         ERROR();
-        mp_clear_multi(private_key.d, private_key.e, private_key.N, private_key.dQ, private_key.dP,
-                       private_key.qP, private_key.p, private_key.q, NULL);
+        rsa_free(&private_key);
         return -1;
     }
 
@@ -68,16 +67,14 @@ int main(void)
     if (err != CRYPT_OK)
     {
         ERROR();
+        rsa_free(&private_key);
         free(signature);
         return err;
     }
 
     printf("* Data hashed and signature generated\n\n");
 
-    mp_clear_multi(private_key.d, private_key.e, private_key.N, private_key.dQ, private_key.dP,
-                   private_key.qP,private_key.p, private_key.q, NULL);
-
-
+    rsa_free(&private_key);
 
     printf("Verifying signature with OPENSSL :\n");
 
@@ -92,50 +89,57 @@ int main(void)
     printf("* OPENSSL initialised :\n");
 
     f = fopen("public_key.pem", "r");
-    unsigned char PUBLIC_KEY[4096] = {0};
-    read = fread(PUBLIC_KEY, sizeof(unsigned char), 4096, f);
+
+    EVP_PKEY *PUBLIC_KEY = EVP_PKEY_new();
+    PEM_read_PUBKEY(f, &PUBLIC_KEY, NULL, NULL);
     fclose(f);
-
-    BIO *keybio;
-    keybio = BIO_new_mem_buf((void*)PUBLIC_KEY, -1);
-    if (keybio == NULL) {
-        ERROR();
-        return -1;
-    }
-
-    RSA *rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa, NULL, NULL);
 
     printf("* Public key parsed\n");
 
-    EVP_PKEY* pubKey = EVP_PKEY_new();
-    EVP_PKEY_assign_RSA(pubKey, rsa);
-    EVP_MD_CTX* m_RSAVerifyCtx = EVP_MD_CTX_create();
-    int ret = 0;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
 
     EVP_PKEY_CTX *pkeyCtx;
-    EVP_PKEY_CTX_set_rsa_padding(pkeyCtx, RSA_PKCS1_PSS_PADDING);
-
-    if(1 != EVP_DigestVerifyInit(m_RSAVerifyCtx, &pkeyCtx, EVP_sha256(),NULL,pubKey))
-    {
-        ERROR();
-        return -1;
-    }
-
-    printf("* Hash initialised\n");
-
-    if(1 != EVP_DigestVerifyUpdate(m_RSAVerifyCtx, data, data_length))
-    {
-        ERROR();
-        return -1;
-    }
-
-    printf("* Data hashed\n");
-
-    if(1 != EVP_DigestVerifyFinal(m_RSAVerifyCtx, signature, signature_length))
+    if (EVP_DigestVerifyInit(ctx, &pkeyCtx, EVP_sha256(), NULL, PUBLIC_KEY) != 1)
     {
         ERROR()
+        EVP_PKEY_free(PUBLIC_KEY);
+        EVP_MD_CTX_destroy(ctx);
+        free(signature);
+        ERR_print_errors_fp(stdout);
         return -1;
     }
+
+    printf("* Digest verified\n");
+
+    EVP_PKEY_CTX_set_rsa_padding(pkeyCtx, RSA_PKCS1_PSS_PADDING);
+
+    printf("* Padding set\n");
+
+    if (EVP_DigestVerifyUpdate(ctx, data, data_length) != 1)
+    {
+        ERROR()
+        EVP_PKEY_free(PUBLIC_KEY);
+        EVP_MD_CTX_destroy(ctx);
+        free(signature);
+        ERR_print_errors_fp(stdout);
+        return -1;
+    }
+
+    printf("* Digest verification updated\n");
+
+    if (EVP_DigestVerifyFinal(ctx, signature, signature_length) != 1)
+    {
+        ERROR()
+        EVP_PKEY_free(PUBLIC_KEY);
+        EVP_MD_CTX_destroy(ctx);
+        free(signature);
+        ERR_print_errors_fp(stdout);
+        return -1;
+    }
+
+    EVP_PKEY_free(PUBLIC_KEY);
+    EVP_MD_CTX_destroy(ctx);
+    free(signature);
 
     printf("* Signature verified\n");
 

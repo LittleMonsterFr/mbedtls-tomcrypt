@@ -131,14 +131,13 @@ int main(void)
     if(err != CRYPT_OK)
     {
         ERROR()
+        rsa_free(&pub_key);
         return err;
     }
 
     printf("* Data hashed and signature verified\n\n");
 
-    mp_clear_multi(pub_key.d, pub_key.e, pub_key.N, pub_key.dQ, pub_key.dP,
-                   pub_key.qP, pub_key.p, pub_key.q, NULL);
-
+    rsa_free(&pub_key);
     free(signature);
 
     printf("Leaving program\n");

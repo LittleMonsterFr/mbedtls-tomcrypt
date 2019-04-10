@@ -50,8 +50,7 @@ int main(void)
     if ((prng_idx = register_prng(&sprng_desc)) == -1)
     {
         ERROR();
-        mp_clear_multi(pub_key.d, pub_key.e, pub_key.N, pub_key.dQ, pub_key.dP,
-                       pub_key.qP, pub_key.p, pub_key.q, NULL);
+        rsa_free(&pub_key);
         return -1;
     }
 
@@ -69,14 +68,14 @@ int main(void)
     if (err != CRYPT_OK)
     {
         ERROR();
+        rsa_free(&pub_key);
         free(signature);
         return err;
     }
 
     printf("* Data hashed and signature generated\n\n");
 
-    mp_clear_multi(pub_key.d, pub_key.e, pub_key.N, pub_key.dQ, pub_key.dP,
-                   pub_key.qP,pub_key.p, pub_key.q, NULL);
+    rsa_free(&pub_key);
 
     printf("Verifying signature with MBEDTLS :\n");
 
