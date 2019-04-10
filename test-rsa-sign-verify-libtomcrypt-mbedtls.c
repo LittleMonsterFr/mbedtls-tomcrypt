@@ -17,14 +17,14 @@ int main(void)
 {
     printf("Generating signature with LIBTOMCRYPT :\n");
 
-    init_LTM();
+    crypt_mp_init("ltm");
 
     printf("* LibTomCrypt initialised\n");
 
     int hash_idx;
     if ((hash_idx = register_hash(&sha256_desc)) == -1)
     {
-        ERROR();
+        ERROR()
         return 1;
     }
 
@@ -39,7 +39,7 @@ int main(void)
     rsa_key pub_key;
     if ((err = rsa_import(PRIVATE_KEY, read, &pub_key)) != CRYPT_OK)
     {
-        ERROR();
+        ERROR()
         printf("%s\n", error_to_string(err));
         return err;
     }
@@ -49,7 +49,7 @@ int main(void)
     int32_t prng_idx;
     if ((prng_idx = register_prng(&sprng_desc)) == -1)
     {
-        ERROR();
+        ERROR()
         rsa_free(&pub_key);
         return -1;
     }
@@ -60,14 +60,14 @@ int main(void)
     unsigned long signature_length = 256;
     unsigned char *signature = calloc(signature_length, sizeof(unsigned char));
 
-    err = rsa_sign_hash(data, data_length,
+    err = rsa_sign_hash((const unsigned char *) data, data_length,
                         signature, &signature_length,
                         NULL, prng_idx, hash_idx, 12,
                         &pub_key);
 
     if (err != CRYPT_OK)
     {
-        ERROR();
+        ERROR()
         rsa_free(&pub_key);
         free(signature);
         return err;
@@ -104,7 +104,7 @@ int main(void)
     int hash_size = md_sha256_info->size;
     unsigned char *hash = calloc(hash_size, sizeof(unsigned char));
 
-    if((err = mbedtls_md(md_sha256_info, data, data_length, hash)) != 0)
+    if((err = mbedtls_md(md_sha256_info, (const unsigned char *) data, data_length, hash)) != 0)
     {
         ERROR()
         free(signature);
@@ -119,7 +119,7 @@ int main(void)
 
     if (err != 0)
     {
-        ERROR();
+        ERROR()
         char error[1024] = {0};
         mbedtls_strerror(err, error, 1024);
         printf("Error : %s\n", error);

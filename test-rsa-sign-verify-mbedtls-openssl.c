@@ -63,7 +63,7 @@ int main(void)
     size_t data_length = strlen(data);
     unsigned char *hash = calloc(hash_size, sizeof(unsigned char));
 
-    if((err = mbedtls_md(md_sha256_info, data, data_length, hash)) != 0)
+    if((err = mbedtls_md(md_sha256_info, (const unsigned char *) data, data_length, hash)) != 0)
     {
         ERROR()
         mbedtls_pk_free(&pk_ctx);
@@ -99,16 +99,6 @@ int main(void)
     free(hash);
 
     printf("Verifying signature with OPENSSL :\n");
-
-    ERR_load_crypto_strings();
-
-    /* Load all digest and cipher algorithms */
-    OpenSSL_add_all_algorithms();
-
-    /* Load config file, and other important initialisation */
-    OPENSSL_config(NULL);
-
-    printf("* OPENSSL initialised :\n");
 
     f = fopen("public_key.pem", "r");
 

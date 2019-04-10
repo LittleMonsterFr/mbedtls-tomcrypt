@@ -67,6 +67,7 @@ foreach(bin ${bins})
 
     add_executable(${bin_name} ${bin})
 
+    target_compile_definitions(${bin_name} PUBLIC OPENSSL_API_COMPAT=0x10100000L)
     target_link_libraries(${bin_name} crypto /Users/littlemonster/chirp/mbedtls-tomcrypt/openssl/libcrypto.a pthread dl)
 
     # Specify the folder in which to put the executable

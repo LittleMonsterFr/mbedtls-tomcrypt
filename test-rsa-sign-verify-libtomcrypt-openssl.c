@@ -7,6 +7,7 @@
 #include "openssl/evp.h"
 #include "openssl/pem.h"
 #include "openssl/err.h"
+#include "openssl/rsa.h"
 
 #define ERROR() printf("Error at line : %d\n", __LINE__);
 
@@ -16,14 +17,14 @@ int main(void)
 {
     printf("Generating signature with LIBTOMCRYPT :\n");
 
-    init_LTM();
+    crypt_mp_init("ltm");
 
     printf("* LibTomCrypt initialised\n");
 
     int hash_idx;
     if ((hash_idx = register_hash(&sha256_desc)) == -1)
     {
-        ERROR();
+        ERROR()
         return 1;
     }
 
@@ -38,7 +39,7 @@ int main(void)
     rsa_key private_key;
     if ((err = rsa_import(PRIVATE_KEY, read, &private_key)) != CRYPT_OK)
     {
-        ERROR();
+        ERROR()
         printf("%s\n", error_to_string(err));
         return err;
     }
@@ -48,7 +49,7 @@ int main(void)
     int32_t prng_idx;
     if ((prng_idx = register_prng(&sprng_desc)) == -1)
     {
-        ERROR();
+        ERROR()
         rsa_free(&private_key);
         return -1;
     }
@@ -59,14 +60,14 @@ int main(void)
     unsigned long signature_length = 256;
     unsigned char *signature = calloc(signature_length, sizeof(unsigned char));
 
-    err = rsa_sign_hash(data, data_length,
+    err = rsa_sign_hash((const unsigned char *) data, data_length,
                         signature, &signature_length,
                         NULL, prng_idx, hash_idx, 12,
                         &private_key);
 
     if (err != CRYPT_OK)
     {
-        ERROR();
+        ERROR()
         rsa_free(&private_key);
         free(signature);
         return err;
@@ -77,16 +78,6 @@ int main(void)
     rsa_free(&private_key);
 
     printf("Verifying signature with OPENSSL :\n");
-
-    ERR_load_crypto_strings();
-
-    /* Load all digest and cipher algorithms */
-    OpenSSL_add_all_algorithms();
-
-    /* Load config file, and other important initialisation */
-    OPENSSL_config(NULL);
-
-    printf("* OPENSSL initialised :\n");
 
     f = fopen("public_key.pem", "r");
 

@@ -58,7 +58,7 @@ int main(void)
     size_t data_length = strlen(data);
     unsigned char *hash = calloc(hash_size, sizeof(unsigned char));
 
-    if((err = mbedtls_md(md_sha256_info, data, data_length, hash)) != 0)
+    if((err = mbedtls_md(md_sha256_info, (const unsigned char *) data, data_length, hash)) != 0)
     {
         ERROR()
         mbedtls_pk_free(&pk_ctx);
@@ -95,14 +95,14 @@ int main(void)
 
     printf("Verifying signature with LIBTOMCRYPT :\n");
 
-    init_LTM();
+    crypt_mp_init("ltm");
 
     printf("* LibTomCrypt initialised\n");
 
     int hash_idx;
     if ((hash_idx = register_hash(&sha256_desc)) == -1)
     {
-        ERROR();
+        ERROR()
         return 1;
     }
 
@@ -125,8 +125,8 @@ int main(void)
 
     int stat;
     err = rsa_verify_hash(signature, signature_length,
-                                  data, data_length,
-                                  hash_idx, hash_descriptor[hash_idx].hashsize, &stat, &pub_key);
+                          (const unsigned char *)data, data_length,
+                          hash_idx, hash_descriptor[hash_idx].hashsize, &stat, &pub_key);
 
     if(err != CRYPT_OK)
     {
