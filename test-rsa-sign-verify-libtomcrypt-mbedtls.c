@@ -60,7 +60,14 @@ int main(void)
     unsigned long signature_length = 256;
     unsigned char *signature = calloc(signature_length, sizeof(unsigned char));
 
-    err = rsa_sign_hash((const unsigned char *) data, data_length,
+    uint8_t hash[32];
+    unsigned long hash_length = sizeof(hash);
+    if ((err = hash_memory(hash_idx, data, data_length, hash, &hash_length)) != CRYPT_OK) {
+        ERROR()
+        return -1;
+    }
+
+    err = rsa_sign_hash((const unsigned char *) hash, hash_length,
                         signature, &signature_length,
                         NULL, prng_idx, hash_idx, 12,
                         &pub_key);
@@ -102,7 +109,7 @@ int main(void)
 
     const mbedtls_md_info_t *md_sha256_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
     int hash_size = md_sha256_info->size;
-    unsigned char *hash = calloc(hash_size, sizeof(unsigned char));
+//    unsigned char *hash = calloc(hash_size, sizeof(unsigned char));
 
     if((err = mbedtls_md(md_sha256_info, (const unsigned char *) data, data_length, hash)) != 0)
     {
@@ -133,7 +140,7 @@ int main(void)
 
 
     mbedtls_pk_free(&pk_ctx);
-    free(hash);
+//    free(hash);
 
     free(signature);
 

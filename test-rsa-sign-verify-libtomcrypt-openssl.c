@@ -9,6 +9,7 @@
 #include "openssl/err.h"
 #include "openssl/rsa.h"
 
+#define ERRORe(e) printf("%d: \"%s\"\n", __LINE__, error_to_string(e));
 #define ERROR() printf("Error at line : %d\n", __LINE__);
 
 char *data = "This is the data which will be hashed and then signed by RSA";
@@ -57,10 +58,18 @@ int main(void)
     printf("* Random number generator registered\n");
 
     size_t data_length = strlen(data);
+
+    uint8_t hash[32];
+    unsigned long hash_length = sizeof(hash);
+    if ((err = hash_memory(hash_idx, data, data_length, hash, &hash_length)) != CRYPT_OK) {
+       ERRORe(err);
+       return -1;
+    }
+
     unsigned long signature_length = 256;
     unsigned char *signature = calloc(signature_length, sizeof(unsigned char));
 
-    err = rsa_sign_hash((const unsigned char *) data, data_length,
+    err = rsa_sign_hash((const unsigned char *) hash, hash_length,
                         signature, &signature_length,
                         NULL, prng_idx, hash_idx, 12,
                         &private_key);
